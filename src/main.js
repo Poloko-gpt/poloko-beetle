@@ -4,6 +4,8 @@ const sceneRoot = document.querySelector('#scene');
 
 const moodNode = document.querySelector('#mood');
 const energyNode = document.querySelector('#energy');
+const hungerNode = document.querySelector('#hunger');
+const loveNode = document.querySelector('#love');
 const feedButton = document.querySelector('#feed');
 const petButton = document.querySelector('#pet');
 const sleepButton = document.querySelector('#sleep');
@@ -40,6 +42,31 @@ ground.rotation.x = -Math.PI / 2;
 ground.position.y = -1.2;
 ground.receiveShadow = true;
 scene.add(ground);
+
+const sparkleGroup = new THREE.Group();
+scene.add(sparkleGroup);
+
+for (let i = 0; i < 26; i += 1) {
+  const orb = new THREE.Mesh(
+    new THREE.SphereGeometry(0.08, 12, 12),
+    new THREE.MeshStandardMaterial({
+      color: i % 2 === 0 ? 0xfff3b0 : 0xa7ef8d,
+      emissive: i % 2 === 0 ? 0xffd870 : 0x74d4a2,
+      emissiveIntensity: 0.32,
+    })
+  );
+  orb.position.set(
+    (Math.random() - 0.5) * 12,
+    0.8 + Math.random() * 4,
+    (Math.random() - 0.5) * 12
+  );
+  orb.userData = {
+    offset: Math.random() * Math.PI * 2,
+    speed: 0.8 + Math.random() * 1.5,
+    distance: 0.5 + Math.random() * 1.2,
+  };
+  sparkleGroup.add(orb);
+}
 
 const littleFlower = (x, z, color) => {
   const stem = new THREE.Mesh(
@@ -163,26 +190,36 @@ const backLegs = legs.slice(4, 6);
 const state = {
   mood: 'Contento',
   energy: 78,
-  happy: 78,
+  hunger: 65,
+  love: 75,
+};
+
+const determineMood = () => {
+  if (state.energy > 70 && state.hunger > 50 && state.love > 60) return 'Contento';
+  if (state.energy < 35 || state.hunger < 25) return 'Cansado';
+  if (state.love < 30) return 'Triste';
+  return 'Somnoliento';
 };
 
 const updateHud = () => {
-  const mood = state.energy > 55 ? 'Contento' : state.energy > 25 ? 'Somnoliento' : 'Cansado';
-  state.mood = mood;
-  moodNode.textContent = mood;
+  state.mood = determineMood();
+  moodNode.textContent = state.mood;
   energyNode.textContent = `${Math.round(state.energy)}%`;
+  hungerNode.textContent = `${Math.round(state.hunger)}%`;
+  loveNode.textContent = `${Math.round(state.love)}%`;
 };
 
 feedButton.addEventListener('click', () => {
-  state.happy = Math.min(100, state.happy + 18);
-  state.energy = Math.min(100, state.energy + 10);
+  state.hunger = Math.min(100, state.hunger + 25);
+  state.energy = Math.min(100, state.energy + 8);
+  state.love = Math.min(100, state.love + 5);
   updateHud();
   beetle.scale.set(1.08, 1.08, 1.08);
   setTimeout(() => beetle.scale.set(1, 1, 1), 180);
 });
 
 petButton.addEventListener('click', () => {
-  state.happy = Math.min(100, state.happy + 22);
+  state.love = Math.min(100, state.love + 22);
   state.energy = Math.min(100, state.energy + 6);
   updateHud();
   beetle.rotation.z = 0.2;
@@ -191,7 +228,8 @@ petButton.addEventListener('click', () => {
 
 sleepButton.addEventListener('click', () => {
   state.energy = Math.min(100, state.energy + 24);
-  state.happy = Math.min(100, state.happy + 8);
+  state.hunger = Math.max(0, state.hunger - 18);
+  state.love = Math.min(100, state.love + 8);
   updateHud();
   beetle.rotation.x = 0.3;
   setTimeout(() => (beetle.rotation.x = 0), 500);
@@ -202,10 +240,9 @@ let clock = new THREE.Clock();
 function animate() {
   const elapsed = clock.getElapsedTime();
 
-  state.energy = Math.max(0, state.energy - 0.05);
-  state.happy = Math.max(0, state.happy - 0.04);
-  state.energy = Math.min(100, state.energy);
-  state.happy = Math.min(100, state.happy);
+  state.energy = Math.max(0, state.energy - 0.08);
+  state.hunger = Math.max(0, state.hunger - 0.12);
+  state.love = Math.max(0, state.love - 0.06);
 
   beetle.position.y = 0.25 + Math.sin(elapsed * 2.2) * 0.28;
   beetle.rotation.y = elapsed * 0.45;
@@ -227,7 +264,14 @@ function animate() {
   leftAntenna.rotation.x = Math.sin(elapsed * 6) * 0.25;
   rightAntenna.rotation.x = Math.sin(elapsed * 6 + 1) * 0.25;
 
-  if (state.happy > 90) {
+  sparkleGroup.children.forEach((orb, index) => {
+    const { offset, speed, distance } = orb.userData;
+    orb.position.y = 1 + Math.sin(elapsed * speed + offset) * distance + index * 0.03;
+    orb.position.x += Math.sin(elapsed * 1.5 + offset) * 0.0025;
+    orb.position.z += Math.cos(elapsed * 1.7 + offset) * 0.0025;
+  });
+
+  if (state.love > 85) {
     leftEye.scale.y = 0.75;
     rightEye.scale.y = 0.75;
   } else {

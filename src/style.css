@@ -46,7 +46,7 @@ canvas {
   position: absolute;
   top: 24px;
   right: 24px;
-  width: min(320px, calc(100vw - 32px));
+  width: min(360px, calc(100vw - 32px));
   padding: 20px 18px 18px;
   border-radius: 20px;
   background: var(--panel-bg);
@@ -103,7 +103,7 @@ h1 {
 }
 
 .stat strong {
-  font-size: 1.1rem;
+  font-size: 1.06rem;
 }
 
 .actions {

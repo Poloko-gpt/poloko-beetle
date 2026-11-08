@@ -68,6 +68,34 @@ for (let i = 0; i < 26; i += 1) {
   sparkleGroup.add(orb);
 }
 
+const particleGroup = new THREE.Group();
+scene.add(particleGroup);
+
+function createBurst(color, origin, amount = 18) {
+  for (let i = 0; i < amount; i += 1) {
+    const dot = new THREE.Mesh(
+      new THREE.SphereGeometry(0.07, 8, 8),
+      new THREE.MeshStandardMaterial({
+        color,
+        emissive: color,
+        emissiveIntensity: 0.5,
+      })
+    );
+
+    dot.position.copy(origin);
+    dot.userData = {
+      velocity: new THREE.Vector3(
+        (Math.random() - 0.5) * 0.18,
+        Math.random() * 0.22 + 0.06,
+        (Math.random() - 0.5) * 0.18
+      ),
+      life: 1 + Math.random() * 0.8,
+    };
+
+    particleGroup.add(dot);
+  }
+}
+
 const littleFlower = (x, z, color) => {
   const stem = new THREE.Mesh(
     new THREE.CylinderGeometry(0.02, 0.02, 0.5, 8),
@@ -194,6 +222,19 @@ const state = {
   love: 75,
 };
 
+const moodColors = {
+  Contento: new THREE.Color(0x9feec8),
+  Somnoliento: new THREE.Color(0xf7d57b),
+  Cansado: new THREE.Color(0xeea670),
+  Triste: new THREE.Color(0x8aaaef),
+};
+
+const pointer = { x: 0, y: 0 };
+window.addEventListener('pointermove', (event) => {
+  pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+  pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+});
+
 const determineMood = () => {
   if (state.energy > 70 && state.hunger > 50 && state.love > 60) return 'Contento';
   if (state.energy < 35 || state.hunger < 25) return 'Cansado';
@@ -214,6 +255,7 @@ feedButton.addEventListener('click', () => {
   state.energy = Math.min(100, state.energy + 8);
   state.love = Math.min(100, state.love + 5);
   updateHud();
+  createBurst(0xf7c35c, beetle.position.clone().add(new THREE.Vector3(0.3, 0.5, 0)), 18);
   beetle.scale.set(1.08, 1.08, 1.08);
   setTimeout(() => beetle.scale.set(1, 1, 1), 180);
 });
@@ -222,6 +264,7 @@ petButton.addEventListener('click', () => {
   state.love = Math.min(100, state.love + 22);
   state.energy = Math.min(100, state.energy + 6);
   updateHud();
+  createBurst(0xff8ea7, beetle.position.clone().add(new THREE.Vector3(0.7, 0.8, 0)), 20);
   beetle.rotation.z = 0.2;
   setTimeout(() => (beetle.rotation.z = 0), 180);
 });
@@ -231,6 +274,7 @@ sleepButton.addEventListener('click', () => {
   state.hunger = Math.max(0, state.hunger - 18);
   state.love = Math.min(100, state.love + 8);
   updateHud();
+  createBurst(0xa7ef8d, beetle.position.clone().add(new THREE.Vector3(0, 0.4, 0)), 16);
   beetle.rotation.x = 0.3;
   setTimeout(() => (beetle.rotation.x = 0), 500);
 });
@@ -244,9 +288,11 @@ function animate() {
   state.hunger = Math.max(0, state.hunger - 0.12);
   state.love = Math.max(0, state.love - 0.06);
 
+  beetle.position.x += (pointer.x * 1.8 - beetle.position.x) * 0.04;
+  beetle.position.z += (pointer.y * 0.7 - beetle.position.z) * 0.04;
   beetle.position.y = 0.25 + Math.sin(elapsed * 2.2) * 0.28;
-  beetle.rotation.y = elapsed * 0.45;
-  beetle.rotation.x = Math.sin(elapsed * 1.6) * 0.12;
+  beetle.rotation.y = elapsed * 0.45 + pointer.x * 0.7;
+  beetle.rotation.x = Math.sin(elapsed * 1.6) * 0.12 + pointer.y * 0.2;
 
   shellTop.rotation.z = Math.sin(elapsed * 2.5) * 0.16;
   body.rotation.z = Math.sin(elapsed * 2.2) * 0.2;
@@ -270,6 +316,24 @@ function animate() {
     orb.position.x += Math.sin(elapsed * 1.5 + offset) * 0.0025;
     orb.position.z += Math.cos(elapsed * 1.7 + offset) * 0.0025;
   });
+
+  particleGroup.children.forEach((dot) => {
+    dot.position.addScaledVector(dot.userData.velocity, 0.08);
+    dot.userData.life -= 0.02;
+    dot.material.opacity = Math.max(0, dot.userData.life);
+    if (dot.userData.life <= 0) {
+      particleGroup.remove(dot);
+      dot.geometry.dispose();
+      dot.material.dispose();
+    }
+  });
+
+  const targetMoodColor = moodColors[state.mood] || moodColors.Contento;
+  const sceneColor = scene.background.clone();
+  scene.background.lerp(targetMoodColor, 0.02);
+  if (scene.background.r < 0.3 && scene.background.g < 0.3 && scene.background.b < 0.3) {
+    scene.background.copy(sceneColor);
+  }
 
   if (state.love > 85) {
     leftEye.scale.y = 0.75;

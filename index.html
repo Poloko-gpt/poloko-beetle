@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Poloko Beetle</title>
+    <meta
+      name="description"
+      content="Mascota virtual 3D de un escarabajo llamado Pololo en JavaScript."
+    />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <div id="scene"></div>
+
+      <aside class="hud">
+        <div class="panel-header">
+          <span class="badge">Poloko Beetle</span>
+          <h1>Pololo</h1>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <span>Estado</span>
+            <strong id="mood">Contento</strong>
+          </div>
+          <div class="stat">
+            <span>Energía</span>
+            <strong id="energy">78%</strong>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="feed">Alimentar</button>
+          <button id="pet">Acariciar</button>
+          <button id="sleep">Dormir</button>
+        </div>
+      </aside>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
